@@ -198,8 +198,10 @@ header h1 span{color:var(--gold-light);}
 .furikomi-fields{
   display:grid;
   grid-template-columns:220px minmax(0,220px) minmax(0,180px);
-  gap:0 20px;align-items:start;
+  gap:0 20px;align-items:end;
 }
+.furikomi-col{display:flex;flex-direction:column;}
+.furikomi-input-wrap{margin-top:auto;}
 @media(max-width:540px){.furikomi-fields{grid-template-columns:1fr;}}
 
 /* ===== CAUTION ===== */
@@ -248,6 +250,14 @@ header h1 span{color:var(--gold-light);}
 
 /* ===== MISC ===== */
 input[type=date]{color-scheme:light;}
+/* カスタム数値スピナー */
+.amount-wrap{display:flex;align-items:center;gap:0;}
+.amount-wrap input{max-width:130px;border-radius:8px 0 0 8px!important;border-right:none!important;text-align:right;}
+.amount-wrap input:focus{border-color:var(--gold)!important;background:#fff!important;box-shadow:0 0 0 3px rgba(201,168,76,.12)!important;z-index:1;position:relative;}
+.spinner-btns{display:flex;flex-direction:column;border:1.5px solid var(--border);border-left:none;border-radius:0 8px 8px 0;overflow:hidden;background:#f9fafb;}
+.spinner-btn{display:flex;align-items:center;justify-content:center;width:28px;height:20px;cursor:pointer;font-size:9px;color:var(--text-muted);background:#f9fafb;border:none;line-height:1;user-select:none;}
+.spinner-btn:hover{background:rgba(201,168,76,.15);color:var(--gold);}
+.spinner-btn:active{background:rgba(201,168,76,.25);}
 #events-err{display:none;color:var(--error);font-size:12px;margin-top:8px;}
 #events-err.show{display:block;}
 </style>
@@ -431,22 +441,35 @@ input[type=date]{color-scheme:light;}
       <div class="card-title"><i class="fas fa-calendar-check"></i> 振込情報</div>
       <div class="card-body">
         <div class="furikomi-fields">
-          <div class="form-group">
+          <div class="form-group furikomi-col">
             <label>振込日<span class="req">*</span></label>
-            <input type="date" id="transferDate">
+            <div class="furikomi-input-wrap">
+              <input type="date" id="transferDate">
+            </div>
             <div class="err-msg" id="transferDate-err">振込日を入力してください</div>
           </div>
-          <div class="form-group">
+          <div class="form-group furikomi-col">
             <label>振込人名<span class="req">*</span></label>
-            <input type="text" id="transferName" placeholder="例：ヤマダ タロウ">
+            <div class="furikomi-input-wrap">
+              <input type="text" id="transferName" placeholder="例：ヤマダ タロウ">
+            </div>
             <div class="err-msg" id="transferName-err">振込人名を入力してください</div>
           </div>
-          <div class="form-group">
+          <div class="form-group furikomi-col">
             <label>振込金額<span class="req">*</span></label>
-            <div style="display:flex;align-items:center;gap:6px;">
-              <span style="font-size:15px;font-weight:700;color:var(--gold);">¥</span>
-              <input type="text" id="transferAmount" placeholder="例：10000" inputmode="numeric" style="max-width:140px;">
+            <div class="furikomi-input-wrap">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:15px;font-weight:700;color:var(--gold);">¥</span>
+                <div class="amount-wrap">
+                  <input type="text" id="transferAmount" placeholder="例：10000" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,\'\')">
+                  <div class="spinner-btns">
+                    <button type="button" class="spinner-btn" onclick="stepAmount(1000)">▲</button>
+                    <button type="button" class="spinner-btn" onclick="stepAmount(-1000)">▼</button>
+                  </div>
+                </div>
+              </div>
             </div>
+            <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">※カンマなし（例：10000）</div>
             <div class="err-msg" id="transferAmount-err">振込金額を入力してください</div>
           </div>
         </div>
@@ -694,6 +717,13 @@ async function searchZip() {
 }
 
 // ===== エラー表示 =====
+function stepAmount(delta) {
+  var el = document.getElementById('transferAmount');
+  var val = parseInt(el.value.replace(/[^0-9]/g, ''), 10) || 0;
+  val = Math.max(0, val + delta);
+  el.value = val;
+}
+
 function showErr(id, show) {
   var el = document.getElementById(id);
   if (el) el.classList.toggle('show', show);
